@@ -12,9 +12,13 @@ import { BiomeKind, Node as DawnseekersKinds } from "ds-contracts/schema/Schema.
 import { Actions as DawnseekersActions } from "ds-contracts/actions/Actions.sol";
 import { Schema as DawnseekersUtils } from "ds-contracts/schema/Schema.sol";
 
-import { Extension } from "../src/Game.sol";
+import {
+    Extension as ExtensionGame,
+    Actions as ExtensionActions,
+    Utils as ExtensionUtils
+} from "../src/Game.sol";
 
-contract ScoutRuleTest is Test {
+contract ExtensionTest is Test {
 
     Game internal dsGame;
     Game internal extGame;
@@ -29,7 +33,7 @@ contract ScoutRuleTest is Test {
         dsGame = new DawnseekersGame();
         dsState = dsGame.getState();
 
-        extGame = new Extension(dsGame);
+        extGame = new ExtensionGame(dsGame);
         extState = extGame.getState();
 
         // setup users
@@ -38,31 +42,7 @@ contract ScoutRuleTest is Test {
     }
 
 
-    function testCheckInBuilding() public {
-        // act as the player "alice"
-        vm.startPrank(aliceAccount);
-
-        // force tile 0,0,0 DISCOVERED
-        dsGame.getDispatcher().dispatch(
-            abi.encodeCall(DawnseekersActions.DEV_SPAWN_TILE, (
-                BiomeKind.DISCOVERED,
-                0,   // q
-                0,   // r
-                0    // s
-            ))
-        );
-
-        // create a seeker for alice
-        dsGame.getDispatcher().dispatch(
-            abi.encodeCall(DawnseekersActions.DEV_SPAWN_SEEKER, (
-                aliceAccount, // owner
-                1,   // seeker id (sid)
-                0,   // q
-                0,   // r
-                0    // s
-            ))
-        );
-
+    function testBuildingKindRegistered() public {
         // expect our building type to already have been registered
         // with our game addr as owner during contract creation
         bytes24 owner = DawnseekersUtils.getOwner(
@@ -74,9 +54,55 @@ contract ScoutRuleTest is Test {
             DawnseekersKinds.Player(address(extGame)),
             "expect the owner of the building kind to be the extension contract"
         );
+    }
+
+    function testBuildingAction() public {
+        // act as the player "alice"
+        vm.startPrank(aliceAccount);
+
+        // force tile 0,1,-1 DISCOVERED
+        dsGame.getDispatcher().dispatch(
+            abi.encodeCall(DawnseekersActions.DEV_SPAWN_TILE, (
+                BiomeKind.DISCOVERED,
+                0, 1, -1    // q,r,s coords
+            ))
+        );
+
+        // create a seeker for alice
+        dsGame.getDispatcher().dispatch(
+            abi.encodeCall(DawnseekersActions.DEV_SPAWN_SEEKER, (
+                aliceAccount, // owner
+                1,   // seeker id (sid)
+                0, 1, -1    // q, r, s coords
+            ))
+        );
+
+        // spawn building instance at location
+        // TODO: add a DEV_ action to do this to avoid direct state access
+        DawnseekersUtils.setFixedLocation(
+            dsGame.getState(),
+            DawnseekersKinds.Building(0,0,1,-1),
+            DawnseekersKinds.Tile(0,0,1,-1)
+        );
+
+        // send action to our dispatcher
+        extGame.getDispatcher().dispatch(
+            abi.encodeCall(ExtensionActions.CHECK_IN, (
+                DawnseekersKinds.Seeker(1),   // seeker id (sid)
+                DawnseekersKinds.Building(0,0,1,-1)   // building id
+            ))
+        );
+
+        // check that the "CheckedIn" relationship exists between Seeker --> Building
+        assertEq(
+            ExtensionUtils.getWhereSeekerCheckedIn( extGame.getState(), DawnseekersKinds.Seeker(1) ),
+            DawnseekersKinds.Building(0,0,1,-1),
+            "expect seeker 1 to have checked in at building at 0,1,-1"
+        );
 
         // stop acting as alice
         vm.stopPrank();
+
     }
 
 

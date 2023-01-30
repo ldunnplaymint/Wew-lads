@@ -26,6 +26,9 @@ library Utils {
     function checkInSeekerAtBuilding(State state, bytes24 seekerID, bytes24 buildingID) internal {
         return state.set(Rel.CheckedIn.selector, 0x0, seekerID, buildingID, 0);
     }
+    function getWhereSeekerCheckedIn(State state, bytes24 seekerID) internal view returns (bytes24 buildingID) {
+        (buildingID,) = state.get(Rel.CheckedIn.selector, 0x0, seekerID);
+    }
 }
 
 // define an action that seekers can perform at our building
