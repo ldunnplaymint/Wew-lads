@@ -26,6 +26,6 @@ function deploy() {
 
 # deploy dawnseekers contracts
 DAWNSEEKERS_ADDRESS=$(cd lib/ds-contracts && ./init.sh)
-GAME_ADDRESS=$(deploy ./src/Game.sol:Game --constructor-args "${DAWNSEEKERS_ADDRESS}")
-echo "${GAME_ADDRESS} extends ${DAWNSEEKERS_ADDRESS}"
+EXTENSION_ADDRESS=$(deploy ./src/Game.sol:Extension --constructor-args "${DAWNSEEKERS_ADDRESS}")
+echo "${EXTENSION_ADDRESS} extends ${DAWNSEEKERS_ADDRESS}"
 
