@@ -8,13 +8,11 @@ PRIVATE_KEY="${PRIVATE_KEY:-"0x6335c92c05660f35b36148bbfb2105a68dd40275ebf16eff9
 
 function deploy() {
 	contract="$1"
-	ds="$2"
 	shift
 	address=$(
 		forge create \
 			--rpc-url "${RPC_URL}" \
 			--private-key "${PRIVATE_KEY}" \
-			--constructor-args "${ds}" \
 				"${contract}" \
 				$@ \
 		| grep 'Deployed to' | awk '{ print $3 }'
@@ -28,6 +26,6 @@ function deploy() {
 
 # deploy dawnseekers contracts
 DAWNSEEKERS_ADDRESS=$(cd lib/ds-contracts && ./init.sh)
-GAME_ADDRESS=$(deploy ./src/Game.sol:Game "${DAWNSEEKERS_ADDRESS}")
+GAME_ADDRESS=$(deploy ./src/Game.sol:Game --constructor-args "${DAWNSEEKERS_ADDRESS}")
 echo "${GAME_ADDRESS} extends ${DAWNSEEKERS_ADDRESS}"
 
