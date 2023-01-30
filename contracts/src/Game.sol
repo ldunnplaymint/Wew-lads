@@ -36,9 +36,9 @@ interface Actions {
 
 contract CheckInRule is Rule {
 
-    Game dawnseekers;
+    BaseGame dawnseekers;
 
-    constructor(Game dawnseekersAddr) {
+    constructor(BaseGame dawnseekersAddr) {
         dawnseekers = dawnseekersAddr;
     }
 
@@ -71,9 +71,9 @@ contract CheckInRule is Rule {
 
 // define a Game to advertise our game's state to be indexed, session routing endpoint, and action handlers
 
-contract Game is BaseGame {
+contract Extension is BaseGame {
 
-    constructor(Game dawnseekers) BaseGame("MyDawnseekersExtension", "http://playmintexample.github.io/frontendplugin") {
+    constructor(BaseGame dawnseekers) BaseGame("MyDawnseekersExtension", "http://playmintexample.github.io/frontendplugin") {
         // create a state
         StateGraph state = new StateGraph();
 
