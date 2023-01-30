@@ -5,8 +5,10 @@ import { CompoundKeyKind, WeightKind, State } from "cog/State.sol";
 import { SessionRouter } from "cog/SessionRouter.sol";
 import { BaseDispatcher, Rule, Context } from "cog/Dispatcher.sol";
 import { StateGraph } from "cog/StateGraph.sol";
-import { BaseGame } from "cog/Game.sol";
+import { Game, BaseGame } from "cog/Game.sol";
+
 import { Schema as DawnseekersUtils } from "ds-contracts/schema/Schema.sol";
+import { Actions as DawnseekersActions } from "ds-contracts/actions/Actions.sol";
 
 import { console } from "forge-std/console.sol";
 
@@ -36,9 +38,9 @@ interface Actions {
 
 contract CheckInRule is Rule {
 
-    BaseGame dawnseekers;
+    Game dawnseekers;
 
-    constructor(BaseGame dawnseekersAddr) {
+    constructor(Game dawnseekersAddr) {
         dawnseekers = dawnseekersAddr;
     }
 
@@ -73,7 +75,7 @@ contract CheckInRule is Rule {
 
 contract Extension is BaseGame {
 
-    constructor(BaseGame dawnseekers) BaseGame("MyDawnseekersExtension", "http://playmintexample.github.io/frontendplugin") {
+    constructor(Game dawnseekers) BaseGame("MyDawnseekersExtension", "http://playmintexample.github.io/frontendplugin") {
         // create a state
         StateGraph state = new StateGraph();
 
@@ -93,6 +95,13 @@ contract Extension is BaseGame {
         _registerState(state);
         _registerRouter(router);
         _registerDispatcher(dispatcher);
+
+        // register our extension as a building kind
+        dawnseekers.getDispatcher().dispatch(
+            abi.encodeCall(DawnseekersActions.REGISTER_BUILDING_KIND, (
+                address(this) // address of thing that will act as building
+            ))
+        );
 
     }
 

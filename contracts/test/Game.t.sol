@@ -8,10 +8,11 @@ import { Dispatcher } from "cog/Dispatcher.sol";
 import { Game } from "cog/Game.sol";
 
 import { Game as DawnseekersGame } from "ds-contracts/Game.sol";
-import { BiomeKind } from "ds-contracts/schema/Schema.sol";
+import { BiomeKind, Node as DawnseekersKinds } from "ds-contracts/schema/Schema.sol";
 import { Actions as DawnseekersActions } from "ds-contracts/actions/Actions.sol";
+import { Schema as DawnseekersUtils } from "ds-contracts/schema/Schema.sol";
 
-import { Extension } from "Game.sol";
+import { Extension } from "../src/Game.sol";
 
 contract ScoutRuleTest is Test {
 
@@ -28,7 +29,7 @@ contract ScoutRuleTest is Test {
         dsGame = new DawnseekersGame();
         dsState = dsGame.getState();
 
-        extGame = new ExtensionGame(dsGame);
+        extGame = new Extension(dsGame);
         extState = extGame.getState();
 
         // setup users
@@ -60,6 +61,18 @@ contract ScoutRuleTest is Test {
                 0,   // r
                 0    // s
             ))
+        );
+
+        // expect our building type to already have been registered
+        // with our game addr as owner during contract creation
+        bytes24 owner = DawnseekersUtils.getOwner(
+            dsGame.getState(),
+            DawnseekersKinds.BuildingKind(address(extGame))
+        );
+        assertEq(
+            owner,
+            DawnseekersKinds.Player(address(extGame)),
+            "expect the owner of the building kind to be the extension contract"
         );
 
         // stop acting as alice
