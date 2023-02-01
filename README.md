@@ -13,3 +13,10 @@ An example/starter repository to fork and get started developing a Building Exte
     * [http://localhost:3000](http://localhost:3000) to see the game's UI
     * [http://localhost:8080](http://localhost:8080) to see graphQL query playground
 
+## Cleaning up
+
+To delete the provisioned services:
+
+```
+docker compose down -v --rmi=all -t 1 --remove-orphans
+```
