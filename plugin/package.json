@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "next dev -p 3011",
     "build": "next build",
+    "build:graphql": "graphql-codegen --config codegen.yml",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@apollo/client": "^3.7.6",
     "@chakra-ui/react": "^2.4.9",
     "@emotion/css": "^11.10.5",
     "@emotion/react": "^11.10.5",
@@ -24,6 +26,12 @@
     "react-dom": "18.1.0"
   },
   "devDependencies": {
+    "@graphql-codegen/cli": "^2.16.5",
+    "@graphql-codegen/fragment-matcher": "^3.3.3",
+    "@graphql-codegen/typescript": "^2.8.8",
+    "@graphql-codegen/typescript-graphql-files-modules": "^2.2.1",
+    "@graphql-codegen/typescript-operations": "^2.5.13",
+    "@graphql-codegen/typescript-react-apollo": "^3.3.7",
     "@types/node": "16.11.7",
     "@types/react": "^18.0.9",
     "@typescript-eslint/eslint-plugin": "5.27.0",
