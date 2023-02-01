@@ -1,0 +1,37 @@
+{
+  "name": "ds-plugin",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3011",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@chakra-ui/react": "^2.4.9",
+    "@emotion/css": "^11.10.5",
+    "@emotion/react": "^11.10.5",
+    "@emotion/server": "^11.10.0",
+    "@emotion/styled": "^11.10.5",
+    "bootstrap-icons": "^1.10.3",
+    "change-case": "4.1.2",
+    "ethers": "^5.7.2",
+    "framer-motion": "^8.5.3",
+    "next": "12.3.4",
+    "polished": "4.2.2",
+    "react": "18.1.0",
+    "react-dom": "18.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "16.11.7",
+    "@types/react": "^18.0.9",
+    "@typescript-eslint/eslint-plugin": "5.27.0",
+    "eslint": "8.16.0",
+    "eslint-config-next": "12.1.6",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-prettier": "4.0.0",
+    "hygen": "6.2.3",
+    "prettier": "2.6.2"
+  }
+}
