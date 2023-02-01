@@ -7,8 +7,9 @@ An example/starter repository to fork and get started developing a Building Exte
 ## Getting started
 
 * Install [Docker](https://docs.docker.com/get-docker/)
-* fork this repository
-* clone this repository with submodules: `git clone --recurse-submodules $YOUR_REPOSITORY_NAME`
+* clone this repository with submodules: `git clone --recursive https://github.com/playmint/ds-example-building-extension.git`
 * run `docker compose up --build` from your cloned repository folder
-* ... will take a minuite or so to provision the game's services, then you should be able to visit: http://localhost:3000 to see the game's UI
+* ... will take a minuite or so to provision the game's services, then you should be able to use a browser to visit:
+    * [http://localhost:3000](http://localhost:3000) to see the game's UI
+    * [http://localhost:8080](http://localhost:8080) to see graphQL query playground
 
