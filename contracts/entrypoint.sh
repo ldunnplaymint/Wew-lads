@@ -31,6 +31,7 @@ echo "+-------------------+"
 anvil \
 	--host 0.0.0.0 \
 	-m "${ACCOUNT_MNEMONIC}" \
+	-b 1 \
 	&
 
 # wait for node to start
