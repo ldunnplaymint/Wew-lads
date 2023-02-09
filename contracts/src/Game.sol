@@ -7,7 +7,7 @@ import { BaseDispatcher, Rule, Context } from "cog/Dispatcher.sol";
 import { StateGraph } from "cog/StateGraph.sol";
 import { Game, BaseGame } from "cog/Game.sol";
 
-import { Schema as DawnseekersUtils } from "ds-contracts/schema/Schema.sol";
+import { Schema as DawnseekersUtils, Kind as DawnseekersKind } from "ds-contracts/schema/Schema.sol";
 import { Actions as DawnseekersActions } from "ds-contracts/actions/Actions.sol";
 
 import { console } from "forge-std/console.sol";
@@ -78,7 +78,7 @@ contract CheckInRule is Rule {
 
 contract Extension is BaseGame {
 
-    constructor(Game dawnseekers) BaseGame("MyDawnseekersExtension", "http://playmintexample.github.io/frontendplugin") {
+    constructor(Game dawnseekers) BaseGame("MyDawnseekersExtension", "") {
         // create a state
         StateGraph state = new StateGraph();
 
@@ -87,6 +87,10 @@ contract Extension is BaseGame {
 
         // create a rule to handle the SIGN_GUESTBOOK action
         Rule guestbookRule = new CheckInRule(dawnseekers);
+
+        // set plugin URL with our address as a param
+        // FIXME: we probably should not be using the game url for this
+        url = string(abi.encodePacked("http://localhost:3011/", toHexString(uint256(uint160(address(this))), 20)));
 
         // configure our dispatcher with state, rules and trust the router
         BaseDispatcher dispatcher = new BaseDispatcher();
@@ -99,6 +103,13 @@ contract Extension is BaseGame {
         _registerRouter(router);
         _registerDispatcher(dispatcher);
 
+        // register the ds node types we are borrowing
+        state.registerNodeType(DawnseekersKind.Seeker.selector, "Seeker", CompoundKeyKind.UINT160);
+        state.registerNodeType(DawnseekersKind.Building.selector, "Building", CompoundKeyKind.INT16_ARRAY);
+
+        // register our "CheckedIn" edge
+        state.registerEdgeType(Rel.CheckedIn.selector, "CheckedIn", WeightKind.UINT64);
+
         // register our extension as a building kind
         dawnseekers.getDispatcher().dispatch(
             abi.encodeCall(DawnseekersActions.REGISTER_BUILDING_KIND, (
@@ -108,4 +119,18 @@ contract Extension is BaseGame {
 
     }
 
+    bytes16 private constant _SYMBOLS = "0123456789abcdef";
+    function toHexString(uint256 value, uint256 length) internal pure returns (string memory) {
+        bytes memory buffer = new bytes(2 * length + 2);
+        buffer[0] = "0";
+        buffer[1] = "x";
+        for (uint256 i = 2 * length + 1; i > 1; --i) {
+            buffer[i] = _SYMBOLS[value & 0xf];
+            value >>= 4;
+        }
+        require(value == 0, "Strings: hex length insufficient");
+        return string(buffer);
+    }
+
 }
+
