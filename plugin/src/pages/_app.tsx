@@ -1,23 +1,25 @@
 /** @format */
 
 import { Fragment } from 'react';
-import { Global } from '@emotion/react';
 import { ChakraProvider } from '@chakra-ui/react';
 import Head from 'next/head';
-import { globalStyles } from '@app/styles/global.styles';
-import { resetStyles } from '@app/styles/reset.styles';
-import { theme } from '@app/styles/theme';
+import { extendTheme, type ThemeConfig } from '@chakra-ui/react';
+import { GlobalStyles } from '@app/styles/global.styles';
 
 function App({ Component, pageProps }: any) {
+    const config: ThemeConfig = {
+        useSystemColorMode: false,
+        initialColorMode: 'dark'
+    };
+    const theme = extendTheme({ config });
     return (
         <Fragment>
             <Head>
-                <title>NextJS Boilerplate</title>
-                <meta name="description" content="Boilerplate project for NextJS 12.x" />
+                <title>Example Client Plugin</title>
+                <meta name="description" content="Example Dawnseekers Client Plugin" />
                 <link rel="icon" href="/favicon.ico" />
             </Head>
-            <Global styles={resetStyles} />
-            <Global styles={globalStyles} />
+            <GlobalStyles />
             <ChakraProvider theme={theme}>
                 <Component {...pageProps} />
             </ChakraProvider>

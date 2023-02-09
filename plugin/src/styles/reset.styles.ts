@@ -1,6 +1,6 @@
 /** @format */
 
-import { css } from '@emotion/css';
+import { css } from 'styled-components';
 
 export const resetStyles = css`
     html {

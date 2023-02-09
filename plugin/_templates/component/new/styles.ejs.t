@@ -3,7 +3,7 @@ to: src/components/<%= h.getComponentDirectory(type) %>/<%= h.changeCase.param(n
 ---
 /** @format */
 
-import { css } from '@emotion/css';
+import { css } from 'styled-components';
 import { <%= h.changeCase.pascal(name) %>Props } from './index';
 
 /**

@@ -1,10 +1,21 @@
 /** @format */
 
-import { css } from '@emotion/css';
+import { createGlobalStyle } from 'styled-components';
+import { resetStyles } from './reset.styles';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 
-export const globalStyles = css`
+export const GlobalStyles = createGlobalStyle`
+    ${resetStyles}
+
+    button {
+        cursor: pointer;
+    }
+
+    i {
+        color: inherit;
+    }
+
     body {
-        background: transparent;
+        background: transparent !important;
     }
 `;

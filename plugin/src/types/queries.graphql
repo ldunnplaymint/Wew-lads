@@ -1,8 +1,10 @@
 # @format
 
 fragment stateFragment on State {
+    block
     # fetch seekers
     seekers: nodes(match: { kinds: ["Seeker"] }) {
+        id
         seekerID: key
         # there are always two location edges
         # the "departure" is the edge with key=0
@@ -20,35 +22,52 @@ fragment stateFragment on State {
                 keys
             }
         }
+        owner: node(match: { kinds: ["Player"], via: [{ rel: "Owner" }] }) {
+            addr: key
+        }
     }
 
-    # fetch all known tiles
-    tiles: nodes(match: { kinds: ["Tile"] }) {
-        # the keys break down the coords
-        # there are 4 parts:
-        #     coords[0] is zone and always 0 for now
-        #     coords[1] is q
-        #     coords[2] is r
-        #     coords[3] is s
-        coords: keys
-        # tiles are either DISCOVERED or UNDISCOVERED
-        # this is recorded on the biome edge weight for now
-        # but this is temporary until we know what we need
-        biome: value(match: { via: [{ rel: "Biome" }] }) # 0=UNDISCOVERED, 1=DISCOVERED
+    buildings: nodes(match: { kinds: ["Building"] }) {
+        id
+        location: edge(match: { kinds: ["Tile"], via: [{ rel: "Location" }] }) {
+            tile: node {
+                id
+                keys
+            }
+        }
+        owner: node(match: { kinds: ["Player"], via: [{ rel: "Owner" }] }) {
+            addr: key
+        }
+        kind: node(match: { kinds: ["BuildingKind"], via: [{ rel: "Is" }] }) {
+            id
+            addr: key
+        }
+    }
+
+    buildingKinds: nodes(match: { kinds: ["BuildingKind"] }) {
+        id
+        addr: key
     }
 }
 
-query GetState {
+query GetState($extID: ID!) {
     game(id: "DAWNSEEKERS") {
         state {
             ...stateFragment
         }
     }
-}
-
-subscription OnState {
-    state(gameID: "DAWNSEEKERS") {
-        ...stateFragment
+    extension: game(id: $extID) {
+        id
+        name
+        url
+        state {
+            seekers: nodes(match: { kinds: ["Seeker"] }) {
+                seekerID: id
+                building: node(match: { kinds: ["Building"], via: [{ rel: "CheckedIn" }] }) {
+                    id
+                }
+            }
+        }
     }
 }
 

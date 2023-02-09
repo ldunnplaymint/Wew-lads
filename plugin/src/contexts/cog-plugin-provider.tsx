@@ -6,32 +6,31 @@ import { Interface } from 'ethers/lib/utils';
 
 export interface CogPluginContextProviderProps {
     children?: ReactNode;
-    gameID: string;
     actions?: Interface;
 }
 
 export interface CogPluginContextStore {
     isReady: boolean;
     registerPlugin: (width: number, height: number, anchor: Anchor) => void;
-    dispatch: (actionName: string, ...actionArgs: any) => void;
-    openModal: (url: string) => void;
-    closeModal: () => void;
+    dispatchAction: (gameID: string, actionName: string, ...actionArgs: any) => void;
+    dispatchActionEncoded: (gameID: string, actionHex: string) => void;
+    broadcastMessage: (eventName: string, ...eventArgs: any) => void;
 }
 
 export const CogPluginContext = createContext<CogPluginContextStore>({} as CogPluginContextStore);
 
 export const useCogPlugin = () => useContext(CogPluginContext);
 
-export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContextProviderProps) => {
+export const CogPluginProvider = ({ children, actions }: CogPluginContextProviderProps) => {
     const [isReady, setIsReady] = useState<boolean>(false);
 
     const registerPlugin = (width: number, height: number, anchor: Anchor) => {
         // todo handle being the top level window
         if (!window.top) return;
 
-        // todo use the full url not just the path
         const url = window.location.pathname;
-        console.log('Register plugin', url);
+
+        console.log('CogPluginProvider: registerPlugin() url:', url);
 
         window.top.postMessage(
             {
@@ -49,19 +48,30 @@ export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContex
         );
     };
 
-    const dispatch = (actionName: string, ...actionArgs: any) => {
+    const dispatchAction = (gameID: string, actionName: string, ...actionArgs: any) => {
         // todo handle being the top level window
         if (!window.top) return;
         if (!actions) return;
 
+        // console.log(`CogPluginProvider.dispatch: gameID: ${gameID} actionName: ${actionName}`);
+
+        const action = actions.encodeFunctionData(actionName, actionArgs);
+
+        dispatchActionEncoded(gameID, action);
+    };
+
+    const dispatchActionEncoded = (gameID: string, action: string) => {
+        // todo handle being the top level window
+        if (!window.top) return;
+
+        // console.log(`CogPluginProvider.dispatchActionEncoded: action: ${action}`);
+
         // todo use the full url not just the path
         const url = window.location.pathname;
-        const action = actions.encodeFunctionData(actionName, actionArgs);
-        console.log(`CogPluginProvider.dispatch: gameID: ${gameID} actionName: ${actionName} action: ${action}`);
 
         window.top.postMessage(
             {
-                method: 'dispatch',
+                method: 'dispatchAction',
                 args: {
                     url,
                     gameID,
@@ -72,24 +82,22 @@ export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContex
         );
     };
 
-    const openModal = (url: string) => {
+    const broadcastMessage = (eventName: string, ...eventArgs: any) => {
+        // todo handle being the top level window
         if (!window.top) return;
-        window.top.postMessage(
-            {
-                method: 'openModal',
-                args: {
-                    url
-                }
-            },
-            '*'
-        );
-    };
 
-    const closeModal = () => {
-        if (!window.top) return;
+        // todo use the full url not just the path
+        const url = window.location.pathname;
+        console.log(`CogPluginProvider.broadcastMessage: eventName: ${eventName} eventArgs:`, eventArgs);
+
         window.top.postMessage(
             {
-                method: 'closeModal'
+                method: 'broadcastMessage',
+                args: {
+                    url,
+                    eventName,
+                    eventArgs
+                }
             },
             '*'
         );
@@ -99,7 +107,7 @@ export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContex
         const handleMessage = (event: any) => {
             const { method } = event.data;
             if (method == 'ready') {
-                console.log('Ready', window.location.pathname.replace(/\/+$/, ''));
+                console.log('Ready', window.location.pathname);
                 setIsReady(true);
             }
         };
@@ -113,9 +121,9 @@ export const CogPluginProvider = ({ children, gameID, actions }: CogPluginContex
     const store: CogPluginContextStore = {
         isReady,
         registerPlugin,
-        dispatch,
-        openModal,
-        closeModal
+        dispatchAction,
+        broadcastMessage,
+        dispatchActionEncoded
     };
     return <CogPluginContext.Provider value={store}>{children}</CogPluginContext.Provider>;
 };

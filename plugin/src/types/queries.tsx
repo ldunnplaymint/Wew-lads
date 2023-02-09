@@ -155,6 +155,7 @@ export type Game = {
     name: Scalars['String'];
     router: Router;
     state: State;
+    url: Scalars['String'];
 };
 
 /** match condition for traversing/filtering the graph. */
@@ -414,8 +415,10 @@ export type SubscriptionTransactionArgs = {
 
 export type StateFragmentFragment = {
     __typename?: 'State';
+    block: number;
     seekers: Array<{
         __typename?: 'Node';
+        id: string;
         seekerID?: any | null;
         location: Array<{
             __typename?: 'Edge';
@@ -423,11 +426,21 @@ export type StateFragmentFragment = {
             time: number;
             tile: { __typename?: 'Node'; keys: Array<any> };
         }>;
+        owner?: { __typename?: 'Node'; addr?: any | null } | null;
     }>;
-    tiles: Array<{ __typename?: 'Node'; coords: Array<any>; biome?: number | null }>;
+    buildings: Array<{
+        __typename?: 'Node';
+        id: string;
+        location?: { __typename?: 'Edge'; tile: { __typename?: 'Node'; id: string; keys: Array<any> } } | null;
+        owner?: { __typename?: 'Node'; addr?: any | null } | null;
+        kind?: { __typename?: 'Node'; id: string; addr?: any | null } | null;
+    }>;
+    buildingKinds: Array<{ __typename?: 'Node'; id: string; addr?: any | null }>;
 };
 
-export type GetStateQueryVariables = Exact<{ [key: string]: never }>;
+export type GetStateQueryVariables = Exact<{
+    extID: Scalars['ID'];
+}>;
 
 export type GetStateQuery = {
     __typename?: 'Query';
@@ -435,8 +448,10 @@ export type GetStateQuery = {
         __typename?: 'Game';
         state: {
             __typename?: 'State';
+            block: number;
             seekers: Array<{
                 __typename?: 'Node';
+                id: string;
                 seekerID?: any | null;
                 location: Array<{
                     __typename?: 'Edge';
@@ -444,30 +459,32 @@ export type GetStateQuery = {
                     time: number;
                     tile: { __typename?: 'Node'; keys: Array<any> };
                 }>;
+                owner?: { __typename?: 'Node'; addr?: any | null } | null;
             }>;
-            tiles: Array<{ __typename?: 'Node'; coords: Array<any>; biome?: number | null }>;
+            buildings: Array<{
+                __typename?: 'Node';
+                id: string;
+                location?: { __typename?: 'Edge'; tile: { __typename?: 'Node'; id: string; keys: Array<any> } } | null;
+                owner?: { __typename?: 'Node'; addr?: any | null } | null;
+                kind?: { __typename?: 'Node'; id: string; addr?: any | null } | null;
+            }>;
+            buildingKinds: Array<{ __typename?: 'Node'; id: string; addr?: any | null }>;
         };
     };
-};
-
-export type OnStateSubscriptionVariables = Exact<{ [key: string]: never }>;
-
-export type OnStateSubscription = {
-    __typename?: 'Subscription';
-    state?: {
-        __typename?: 'State';
-        seekers: Array<{
-            __typename?: 'Node';
-            seekerID?: any | null;
-            location: Array<{
-                __typename?: 'Edge';
-                key: number;
-                time: number;
-                tile: { __typename?: 'Node'; keys: Array<any> };
+    extension: {
+        __typename?: 'Game';
+        id: string;
+        name: string;
+        url: string;
+        state: {
+            __typename?: 'State';
+            seekers: Array<{
+                __typename?: 'Node';
+                seekerID: string;
+                building?: { __typename?: 'Node'; id: string } | null;
             }>;
-        }>;
-        tiles: Array<{ __typename?: 'Node'; coords: Array<any>; biome?: number | null }>;
-    } | null;
+        };
+    };
 };
 
 export type SigninMutationVariables = Exact<{
@@ -499,7 +516,9 @@ export type DispatchMutation = {
 
 export const StateFragmentFragmentDoc = gql`
     fragment stateFragment on State {
+        block
         seekers: nodes(match: { kinds: ["Seeker"] }) {
+            id
             seekerID: key
             location: edges(match: { kinds: ["Tile"], via: [{ rel: "Location" }] }) {
                 key
@@ -508,18 +527,50 @@ export const StateFragmentFragmentDoc = gql`
                     keys
                 }
             }
+            owner: node(match: { kinds: ["Player"], via: [{ rel: "Owner" }] }) {
+                addr: key
+            }
         }
-        tiles: nodes(match: { kinds: ["Tile"] }) {
-            coords: keys
-            biome: value(match: { via: [{ rel: "Biome" }] })
+        buildings: nodes(match: { kinds: ["Building"] }) {
+            id
+            location: edge(match: { kinds: ["Tile"], via: [{ rel: "Location" }] }) {
+                tile: node {
+                    id
+                    keys
+                }
+            }
+            owner: node(match: { kinds: ["Player"], via: [{ rel: "Owner" }] }) {
+                addr: key
+            }
+            kind: node(match: { kinds: ["BuildingKind"], via: [{ rel: "Is" }] }) {
+                id
+                addr: key
+            }
+        }
+        buildingKinds: nodes(match: { kinds: ["BuildingKind"] }) {
+            id
+            addr: key
         }
     }
 `;
 export const GetStateDocument = gql`
-    query GetState {
+    query GetState($extID: ID!) {
         game(id: "DAWNSEEKERS") {
             state {
                 ...stateFragment
+            }
+        }
+        extension: game(id: $extID) {
+            id
+            name
+            url
+            state {
+                seekers: nodes(match: { kinds: ["Seeker"] }) {
+                    seekerID: id
+                    building: node(match: { kinds: ["Building"], via: [{ rel: "CheckedIn" }] }) {
+                        id
+                    }
+                }
             }
         }
     }
@@ -538,10 +589,11 @@ export const GetStateDocument = gql`
  * @example
  * const { data, loading, error } = useGetStateQuery({
  *   variables: {
+ *      extID: // value for 'extID'
  *   },
  * });
  */
-export function useGetStateQuery(baseOptions?: Apollo.QueryHookOptions<GetStateQuery, GetStateQueryVariables>) {
+export function useGetStateQuery(baseOptions: Apollo.QueryHookOptions<GetStateQuery, GetStateQueryVariables>) {
     const options = { ...defaultOptions, ...baseOptions };
     return Apollo.useQuery<GetStateQuery, GetStateQueryVariables>(GetStateDocument, options);
 }
@@ -552,38 +604,6 @@ export function useGetStateLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<G
 export type GetStateQueryHookResult = ReturnType<typeof useGetStateQuery>;
 export type GetStateLazyQueryHookResult = ReturnType<typeof useGetStateLazyQuery>;
 export type GetStateQueryResult = Apollo.QueryResult<GetStateQuery, GetStateQueryVariables>;
-export const OnStateDocument = gql`
-    subscription OnState {
-        state(gameID: "DAWNSEEKERS") {
-            ...stateFragment
-        }
-    }
-    ${StateFragmentFragmentDoc}
-`;
-
-/**
- * __useOnStateSubscription__
- *
- * To run a query within a React component, call `useOnStateSubscription` and pass it any options that fit your needs.
- * When your component renders, `useOnStateSubscription` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the subscription, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useOnStateSubscription({
- *   variables: {
- *   },
- * });
- */
-export function useOnStateSubscription(
-    baseOptions?: Apollo.SubscriptionHookOptions<OnStateSubscription, OnStateSubscriptionVariables>
-) {
-    const options = { ...defaultOptions, ...baseOptions };
-    return Apollo.useSubscription<OnStateSubscription, OnStateSubscriptionVariables>(OnStateDocument, options);
-}
-export type OnStateSubscriptionHookResult = ReturnType<typeof useOnStateSubscription>;
-export type OnStateSubscriptionResult = Apollo.SubscriptionResult<OnStateSubscription>;
 export const SigninDocument = gql`
     mutation signin($gameID: ID!, $session: String!, $auth: String!) {
         signin(gameID: $gameID, session: $session, ttl: 9999, scope: "0xffffffff", authorization: $auth)
