@@ -17,7 +17,7 @@ services:
       - 3011:3000
 
   cog:
-    image: playmint/cog-services:latest
+    image: ghcr.io/playmint/cog-services:latest
     pull_policy: always
     restart: always
     entrypoint:
@@ -43,7 +43,7 @@ services:
       - contracts
 
   shell:
-    image: playmint/ds-shell:latest
+    image: ghcr.io/playmint/ds-shell:latest
     pull_policy: always
     restart: always
     ports:
